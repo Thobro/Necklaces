@@ -73,41 +73,8 @@ def sample_polygon(p, n=50):
 
     return points
 
-def sample_shape_2(s, n=50):
-    triangulations = []
-    for polygon in s:
-        triangulation = triangulate_polygon(polygon)
-        polygon_size = sum([triangle_area(t) for t in triangulation])
-        triangulation = [(t, triangle_area(t) / polygon_size) for t in triangulation]
-        triangulation[0] = triangulation[0][0], triangulation[0][1], 0
-        for i in range(1, len(triangulation)):
-            triangulation[i] = (triangulation[i][0], triangulation[i][1] + triangulation[i-1][1], triangulation[i-1][1])
-
-        triangulations.append((polygon_size, triangulation))
-    
-    shape_size = sum([triangulation[0] for triangulation in triangulations])
-    triangulations = [(triangulation[0] / shape_size, triangulation[1]) for triangulation in triangulations]
-
-    triangulations[0] = triangulations[0][0], triangulations[0][1], 0
-    
-    for i in range(1, len(triangulations)):
-        triangulations[i] = (triangulations[i][0] + triangulations[i-1][0], triangulations[i][1], triangulations[i-1][0])
-
-    points = []
-    samples = np.random.uniform(0, 1, n)
-    points = []
-    for s in samples:
-        for ma1, t, mi1 in triangulations: # Pick which part of the country to pick from, if multiple parts.
-            if mi1 <= s <= ma1:
-                sample = np.random.uniform(0, 1)
-                for tr, ma, mi in t: # Pick which triangle to pick from.
-                    if mi <= sample <= ma:
-                        p = point_from_triangle(tr)
-                        points.append(p)
-    return points
-
 def sample_shape(s, n=50):
-    """Samples a polygon."""
+    """Samples a shape that consists of multiple polygons."""
     triangulation = []
     for polygon in s:
         tri = triangulate_polygon(polygon)

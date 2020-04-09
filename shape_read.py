@@ -32,9 +32,9 @@ plt.show()'''
 
 def shapefile_to_shape_recs():
     sf = shapefile.Reader("NE_110_CU/ne_110m_admin_0_map_units.shp")
+    #sf = shapefile.Reader("Provinces/ne_110m_admin_1_states_provinces_lakes.shp")
     shape_recs = sf.shapeRecords()
     shape_recs = [(functions.shape_to_parts(shape_rec.shape), shape_rec.record) for shape_rec in shape_recs]
-    #polygons = [polygon for parts in shapes for polygon in parts]
     return shape_recs
 
 #sf = shapefile.Reader("NE_110_CU/ne_110m_admin_0_map_units.shp")
