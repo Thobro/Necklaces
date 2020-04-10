@@ -27,6 +27,9 @@ def point_from_triangle(t):
 def sq_euclid_dist(p1, p2):
     return (p1[0] - p2[0])**2 + (p1[1] - p2[1])**2
 
+def euclid_dist(p1, p2):
+    return math.sqrt(sq_euclid_dist(p1, p2))
+
 def points_to_circle(p1, p2, p3):
     """Compute centre and radius of circle of two points."""
     temp = p2[0] * p2[0] + p2[1] * p2[1]
@@ -136,6 +139,70 @@ def smallest_k_disc(point_sets):
 
     return best
 
+def find_rp(r, p, point_sets, mapping):
+    all_points = [q for point_set in point_sets for q in point_set]
+    all_points = [q for q in all_points if q != p and euclid_dist(p, q) < 2 * r] # Compute I(p, r)
+    c_depth = [0 for ps in point_sets]
+    intersections = []
+
+    c_depth[mapping[p]] += 1
+
+    intersection_mapping = {}
+
+    for q in all_points:
+        midpoint = ((p[0] + q[0]) / 2), ((p[1] + q[1]) / 2)
+        a = euclid_dist(p, q) / 2
+        h = math.sqrt(r**2 - a**2)
+
+        p1 = (midpoint[0] + h * ((q[1] - p[1]) / (2 * a)), midpoint[1] - h * ((q[0] - p[0]) / (2 * a)))
+        p2 = (midpoint[0] - h * ((q[1] - p[1]) / (2 * a)), midpoint[1] + h * ((q[0] - p[0]) / (2 * a)))
+
+        intersection_mapping[p1] = q
+        intersection_mapping[p2] = q
+
+        intersections.append(p1)
+        intersections.append(p2)
+        
+
+    intersections = sorted(intersections, key=lambda q: (math.atan2(q[1] - p[1], q[0] - p[0]) + 2 * math.pi) % (2 * math.pi))
+    open_discs = []
+    c_depth[mapping[intersection_mapping[intersections[0]]]] += 1
+    open_discs.append(intersection_mapping[intersections[0]])
+    print(intersections[0])
+    print(c_depth, open_discs)
+
+
+    for i in range(1, len(intersections)):
+        intersection = intersections[i]
+        print(intersection)
+        if intersection_mapping[intersection] in open_discs:
+            c_depth[mapping[intersection_mapping[intersection]]] -= 1
+        else:
+            c_depth[mapping[intersection_mapping[intersection]]] += 1
+            open_discs.append(intersection_mapping[intersection])
+
+        print(c_depth, open_discs)
+
+
+
+
+
+
+
+
+def smallest_k_disc_fast(point_sets):
+    all_points = [p for point_set in point_sets for p in point_set]
+    c_depth = [0 for ps in point_sets]
+    mapping = {}
+    for i in range(len(point_sets)):
+        for p in point_sets[i]:
+            mapping[p] = i
+
+    r = 3
+    find_rp(r, point_sets[0][0], point_sets, mapping)
+
+    
+
 
 def shape_to_parts(polygon):
     polygons = []
@@ -147,3 +214,8 @@ def shape_to_parts(polygon):
         polygons.append(polygon.points[start:end])
     polygons.append(polygon.points[polygon.parts[-1]:])
     return polygons
+
+
+
+point_sets = [[(0, 0), (4, -2), (4, 3)], [(-4, -1), (-2, 3)]]
+smallest_k_disc_fast(point_sets)

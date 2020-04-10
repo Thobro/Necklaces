@@ -7,13 +7,14 @@ import functions
 import shape_read
 
 fig = plt.figure(1, dpi=72)
-#fig.patch.set_visible(False)
+fig.patch.set_visible(False)
 ax = fig.add_subplot(111)
-#ax.axis('off')
+ax.axis('off')
 ax.set_aspect('equal')
 
 shape_recs = shape_read.shapefile_to_shape_recs()
-shape_recs = [(shape, record) for shape, record in shape_recs if record['CONTINENT'] == "Europe" and record['POP_EST'] >= 10000]
+shape_recs = [(shape, record) for shape, record in shape_recs if record['SUBREGION'] == "Western Europe" or record['SUBREGION'] == "Northern Europe" and record['POP_EST'] >= 1000]
+#shape_recs = [(shape, record) for shape, record in shape_recs if record['CONTINENT'] == "Asia" and record['POP_EST'] >= 10000]
 #shape_recs = [(shape, record) for shape, record in shape_recs if record['iso_a2'] == "NL"]
 for shape, record in shape_recs:
     for polygon in shape:
@@ -24,7 +25,7 @@ for shape, record in shape_recs:
 
 point_sets = []
 for shape, record in shape_recs:
-    sample = functions.sample_shape(shape, 2)
+    sample = functions.sample_shape(shape, 10)
     point_sets.append(sample)
 
 disc = functions.smallest_k_disc(point_sets)
