@@ -2,6 +2,7 @@ import tripy
 import numpy as np
 from tqdm import tqdm
 import math
+from smallestenclosingcircle import make_circle
 
 def triangle_area(t):
     """Compute the area of a triangle."""
@@ -140,9 +141,15 @@ def smallest_k_disc(point_sets):
     return best
 
 def find_rp(r, p, point_sets, mapping):
+    """Function returns the smallest disc that contains p on its boundary."""
     all_points = [q for point_set in point_sets for q in point_set]
     all_points = [q for q in all_points if q != p and euclid_dist(p, q) < 2 * r] # Compute I(p, r)
     c_depth = [0 for ps in point_sets]
+    open_discs = [p]
+    valid_configs = []
+
+    constraints = [int(len(point_set) / 2) for point_set in point_sets]
+
     intersections = []
 
     c_depth[mapping[p]] += 1
@@ -162,32 +169,39 @@ def find_rp(r, p, point_sets, mapping):
 
         intersections.append(p1)
         intersections.append(p2)
+
+        if abs((math.atan2(p1[1] - p[1], p1[0] - p[0]) + 2 * math.pi) % (2 * math.pi) - (math.atan2(p2[1] - p[1], p2[0] - p[0]) + 2 * math.pi) % (2 * math.pi)) > 3:
+            open_discs.append(q)
+            c_depth[mapping[q]] += 1
         
 
     intersections = sorted(intersections, key=lambda q: (math.atan2(q[1] - p[1], q[0] - p[0]) + 2 * math.pi) % (2 * math.pi))
-    open_discs = []
-    c_depth[mapping[intersection_mapping[intersections[0]]]] += 1
-    open_discs.append(intersection_mapping[intersections[0]])
-    print(intersections[0])
-    print(c_depth, open_discs)
+    
+    #c_depth[mapping[intersection_mapping[intersections[0]]]] += 1
+    #open_discs.append(intersection_mapping[intersections[0]])
+    #print(intersections[0])
+    #print(c_depth, open_discs)
 
 
-    for i in range(1, len(intersections)):
+    for i in range(0, len(intersections)):
         intersection = intersections[i]
-        print(intersection)
+        #print(intersection)
         if intersection_mapping[intersection] in open_discs:
             c_depth[mapping[intersection_mapping[intersection]]] -= 1
+            open_discs.remove(intersection_mapping[intersection])
         else:
             c_depth[mapping[intersection_mapping[intersection]]] += 1
             open_discs.append(intersection_mapping[intersection])
 
-        print(c_depth, open_discs)
+        #print(c_depth, open_discs)
 
+        if all([c_depth[i] >= constraints[i] for i in range(len(c_depth))]):
+            valid_configs.append(list(open_discs))
 
+    circles = [make_circle(v) for v in valid_configs]
+    min_disc = min(circles, key=lambda c: c[2])
 
-
-
-
+    return min_disc
 
 
 def smallest_k_disc_fast(point_sets):
@@ -198,9 +212,9 @@ def smallest_k_disc_fast(point_sets):
         for p in point_sets[i]:
             mapping[p] = i
 
-    r = 3
-    find_rp(r, point_sets[0][0], point_sets, mapping)
-
+    r = 5
+    min_disc = find_rp(r, point_sets[0][0], point_sets, mapping)
+    print(min_disc)
     
 
 
@@ -217,5 +231,5 @@ def shape_to_parts(polygon):
 
 
 
-point_sets = [[(0, 0), (4, -2), (4, 3)], [(-4, -1), (-2, 3)]]
+point_sets = [[(0, 0), (3, -4), (4, 3)], [(-4, -1), (-2, 3), (-5, 2)]]
 smallest_k_disc_fast(point_sets)
