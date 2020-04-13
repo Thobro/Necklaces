@@ -31,17 +31,18 @@ for polygon in polygons:
 plt.show()'''
 
 def shapefile_to_shape_recs():
-    sf = shapefile.Reader("NE_110_CU/ne_110m_admin_0_map_units.shp")
-    #sf = shapefile.Reader("Provinces/ne_110m_admin_1_states_provinces_lakes.shp")
+    #sf = shapefile.Reader("NE_110_CU/ne_110m_admin_0_map_units.shp")
+    sf = shapefile.Reader("Provinces/ne_110m_admin_1_states_provinces_lakes.shp")
     shape_recs = sf.shapeRecords()
     shape_recs = [(functions.shape_to_parts(shape_rec.shape), shape_rec.record) for shape_rec in shape_recs]
     for shape, rec in shape_recs:
-        print(rec['SUBREGION'])
+        print(rec['region'])
     return shape_recs
 
 #sf = shapefile.Reader("NE_110_CU/ne_110m_admin_0_map_units.shp")
-#fields = sf.fields
-#print(fields)
+sf = shapefile.Reader("Provinces/ne_110m_admin_1_states_provinces_lakes.shp")
+fields = sf.fields
+print(fields)
 #shapeRecs = sf.shapeRecords()
 #print(shapeRecs[100].record['CONTINENT'])
 
