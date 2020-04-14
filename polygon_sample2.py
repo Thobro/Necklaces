@@ -40,12 +40,14 @@ circles = []
 for region in split_dict:
     point_sets_local = []
     for shape in split_dict[region]:
-        sample = functions.sample_shape(shape, 30)
+        sample = functions.sample_shape(shape, 12)
         point_sets_local.append(sample)
         point_sets.append(sample)
     disc = functions.smallest_k_disc_fast(point_sets_local)
     circle = plt.Circle(disc[0], disc[1], fill=False, edgecolor="k", lw=3, clip_on=False)
     circles.append(circle)
+
+print(point_sets)
 
 for c in circles:
     ax.add_artist(c)
