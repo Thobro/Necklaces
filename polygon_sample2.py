@@ -13,11 +13,14 @@ ax.axis('off')
 ax.set_aspect('equal')
 
 shape_recs = shape_read.shapefile_to_shape_recs()
-#shape_recs = [(shape, record) for shape, record in shape_recs if record['SUBREGION'] == "Northern America" or record['SUBREGION'] == "Central America" and record['POP_EST'] >= 1000]
+shape_recs = [(shape, record) for shape, record in shape_recs if record['SUBREGION'] == "Northern Europe" or record['SUBREGION'] == "Western Europe" and record['POP_EST'] >= 1000]
 #shape_recs = [(shape, record) for shape, record in shape_recs if record['CONTINENT'] == "Asia" and record['POP_EST'] >= 10000]
-shape_recs = [(shape, record) for shape, record in shape_recs if record['name'] not in ['Alaska', 'Hawaii']]
-split_dict = {}
+#shape_recs = [(shape, record) for shape, record in shape_recs if record['name'] not in ['Alaska', 'Hawaii']]
+split_dict = {'a': []}
 for shape, rec in shape_recs:
+    if rec['NAME'] != "Iceland" and rec['NAME'] != "Svalbard Is.":
+        split_dict['a'].append(shape)
+    continue
     if rec['region'] not in split_dict:
         split_dict[rec['region']] = [shape]
     else:
@@ -34,13 +37,17 @@ for shape, record in shape_recs:
 point_sets = []
 '''for shape, record in shape_recs:
     sample = functions.sample_shape(shape, 30)
-    point_sets.append(sample)'''
+    point_sets.append(sample)
+
+disc = functions.smallest_k_disc_fast(point_sets)
+circle = plt.Circle(disc[0], disc[1], fill=False, edgecolor="k", lw=3, clip_on=False)'''
+
 
 circles = []
 for region in split_dict:
     point_sets_local = []
     for shape in split_dict[region]:
-        sample = functions.sample_shape(shape, 12)
+        sample = functions.sample_shape(shape, 30)
         point_sets_local.append(sample)
         point_sets.append(sample)
     disc = functions.smallest_k_disc_fast(point_sets_local)
@@ -48,6 +55,8 @@ for region in split_dict:
     circles.append(circle)
 
 print(point_sets)
+
+#ax.add_artist(circle)
 
 for c in circles:
     ax.add_artist(c)
