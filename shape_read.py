@@ -36,8 +36,8 @@ def shapefile_to_shape_recs():
     sf = shapefile.Reader(fp)
     data = gpd.read_file(fp)
     data_proj = data.copy()
-    #data_proj = data_proj.to_crs(epsg=3395)
-    data_proj = data_proj.to_crs("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +a=6371000 +b=6371000 +units=m +no_defs ")
+    data_proj = data_proj.to_crs(epsg=3395)
+    #data_proj = data_proj.to_crs("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +a=6371000 +b=6371000 +units=m +no_defs")
 
     shapes = []
 
@@ -54,6 +54,8 @@ def shapefile_to_shape_recs():
     
     shape_recs = sf.shapeRecords()
     shape_recs = [(parts, shape_rec.record) for (parts, shape_rec) in zip(shapes, shape_recs)]
+    for shape, rec in shape_recs:
+        print(rec['SUBREGION'])
 
     #shape_recs = [(functions.shape_to_parts(shape_rec.shape), shape_rec.record) for shape_rec in shape_recs]
     return shape_recs

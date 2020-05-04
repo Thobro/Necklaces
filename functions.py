@@ -336,6 +336,16 @@ def shape_to_parts(polygon):
     polygons.append(polygon.points[polygon.parts[-1]:])
     return polygons
 
+def borders(shape1, shape2):
+    all_points1 = {p for polygon in shape1 for p in polygon}
+    all_points2 = {p for polygon in shape2 for p in polygon}
+
+    intersection = all_points1.intersection(all_points2)
+    #print(intersection)
+    return len(intersection) > 0
+
+
+
 
 
 
