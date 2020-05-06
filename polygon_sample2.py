@@ -7,9 +7,18 @@ import functions
 import shape_read
 from map_colors import map_colors
 import random
+from tqdm import tqdm
 import configs
 
 CONFIG = 'Europe'
+THRESHOLD = 0
+POINT_COUNT = 32
+FILENAME_LOWRES = "Countries_110/ne_110m_admin_0_countries.shp"
+FILENAME_HIGHRES = "Countries_50/ne_50m_admin_0_countries.shp"
+
+
+
+triangulation_cache = {}
 
 fig = plt.figure(1, dpi=72)
 fig.patch.set_visible(False)
@@ -24,59 +33,87 @@ def trim(shape, trim_bounds):
 
     return [p for p in shape if len(p) != 0]
 
-shape_recs = shape_read.shapefile_to_shape_recs()
-shape_recs = [(trim(shape, configs.configs[CONFIG]['trim_bounds']), record) for shape, record in shape_recs if any([f(record) for f in configs.configs[CONFIG]['options']]) and all([f(record) for f in configs.configs[CONFIG]['requirements']])]
-shape_recs = [(shape, record) for shape, record in shape_recs if len(shape) != 0]
-shape_recs = [(shape, record) for shape, record in shape_recs if not any([f(record) for f in configs.configs[CONFIG]['exclude']])]
+def prune(shape, record, threshold):
+    '''Remove small islands etc.'''
+    triangulation = triangulation_cache[record[configs.configs[CONFIG]['name_identifier']]]
+    new_shape = []
+    for i in range(len(shape)):
+        area = functions.polygon_area(triangulation[i])
+        if area > threshold:
+            new_shape.append(shape[i])
+
+    return new_shape
+
+def prepare_shape_recs(shape_recs):
+    shape_recs = [(trim(shape, configs.configs[CONFIG]['trim_bounds']), record) for shape, record in shape_recs if any([f(record) for f in configs.configs[CONFIG]['options']]) and all([f(record) for f in configs.configs[CONFIG]['requirements']])]
+    shape_recs = [(shape, record) for shape, record in shape_recs if len(shape) != 0]
+    shape_recs = [(shape, record) for shape, record in shape_recs if not any([f(record) for f in configs.configs[CONFIG]['exclude']])]
+    return shape_recs
+
+def get_colors_from_shape_recs(shape_recs):
+    c = 0
+    color_mapping = {}
+
+    for shape1, rec1 in shape_recs:
+        neighbors = [r[configs.configs[CONFIG]['name_identifier']] for (s, r) in shape_recs if r[configs.configs[CONFIG]['name_identifier']] in color_mapping and s != shape1 and functions.borders(s, shape1)]
+        neighbor_colors = [color_mapping[n] for n in neighbors if n in color_mapping]
+        while c in neighbor_colors:
+            c += 1
+        color_mapping[rec1[configs.configs[CONFIG]['name_identifier']]] = c % len(map_colors)
+
+        c += 1
+        c = c % len(map_colors)
+    
+    return color_mapping
+
+def plot_shape_recs(shape_recs):
+    color_mapping = get_colors_from_shape_recs(shape_recs)
+
+    for shape, record in shape_recs:
+        for polygon in shape:
+            poly = Polygon(polygon)
+            x,y = poly.exterior.xy
+            ax.plot(x, y, color='000', alpha=1,
+                linewidth=1, zorder=0)
+            ax.fill(x, y, color=map_colors[color_mapping[record[configs.configs[CONFIG]['name_identifier']]]], alpha=1,
+                linewidth=0, zorder=0)
+
+
+shape_recs = shape_read.shapefile_to_shape_recs(FILENAME_LOWRES)
+shape_recs = prepare_shape_recs(shape_recs)
+
+
+print("Computing triangulation...")
+for shape, rec in tqdm(shape_recs):
+    if not any([f(rec) for f in configs.configs[CONFIG]['exclude']]):
+        triangulation = []
+        for polygon in shape:
+            tri = functions.triangulate_polygon(polygon)
+            triangulation.append(tri)
+        triangulation_cache[rec[configs.configs[CONFIG]['name_identifier']]] = triangulation
+
+shape_recs = [(prune(shape, record, THRESHOLD), record) for shape, record in shape_recs]
 split_dict = {'a': []}
 for shape, rec in shape_recs:
     if not any([f(rec) for f in configs.configs[CONFIG]['show_but_exclude']]):
-        split_dict['a'].append(shape)
+        if configs.configs[CONFIG].get('grouping'):
+            if configs.configs[CONFIG]['grouping'](rec) not in split_dict:
+                split_dict[configs.configs[CONFIG]['grouping'](rec)] = [(shape, rec)]
+            else:
+                split_dict[configs.configs[CONFIG]['grouping'](rec)].append((shape, rec))
+        else:
+            split_dict['a'].append((shape, rec))
     continue
-    if rec['region'] not in split_dict:
-        split_dict[rec['region']] = [shape]
-    else:
-        split_dict[rec['region']].append(shape)
 
-
-
-c = 0
-color_mapping = {}
-
-for shape1, rec1 in shape_recs:
-    neighbors = [r['NAME'] for (s, r) in shape_recs if r['NAME'] in color_mapping and s != shape1 and functions.borders(s, shape1)]
-    neighbor_colors = [color_mapping[n] for n in neighbors if n in color_mapping]
-    while c in neighbor_colors:
-        c += 1
-    color_mapping[rec1['NAME']] = c % len(map_colors)
-
-    c += 1
-    c = c % len(map_colors)
-
-
-for shape, record in shape_recs:
-    for polygon in shape:
-        poly = Polygon(polygon)
-        x,y = poly.exterior.xy
-        ax.plot(x, y, color='000', alpha=1,
-            linewidth=1, zorder=0)
-        ax.fill(x, y, color=map_colors[color_mapping[record['NAME']]], alpha=1,
-            linewidth=0, zorder=0)
+plot_shape_recs(prepare_shape_recs(shape_read.shapefile_to_shape_recs(FILENAME_HIGHRES)))
 
 point_sets = []
-'''for shape, record in shape_recs:
-    sample = functions.sample_shape(shape, 30)
-    point_sets.append(sample)
-
-disc = functions.smallest_k_disc_fast(point_sets)
-circle = plt.Circle(disc[0], disc[1], fill=False, edgecolor="k", lw=3, clip_on=False)'''
-
-
 circles = []
 for region in split_dict:
     point_sets_local = []
-    for shape in split_dict[region]:
-        sample = functions.sample_shape(shape, 16)
+    for shape, rec in split_dict[region]:
+        print(rec['NAME'])
+        sample = functions.sample_shape(shape, rec, POINT_COUNT, triangulation_cache[rec[configs.configs[CONFIG]['name_identifier']]], THRESHOLD)
         point_sets_local.append(sample)
         point_sets.append(sample)
     disc = functions.smallest_k_disc_fast(point_sets_local)

@@ -31,13 +31,19 @@ for polygon in polygons:
 
 plt.show()'''
 
-def shapefile_to_shape_recs():
-    fp = "NE_110_CU/ne_110m_admin_0_map_units.shp"
+def shapefile_to_shape_recs(fp):
+    #fp = "NE_110_CU/ne_110m_admin_0_map_units.shp"
+    #fp = "Provinces/ne_110m_admin_1_states_provinces_lakes.shp"
+    #fp = "Countries_50/ne_50m_admin_0_countries_lakes.shp"
+    #fp = "Countries_50/ne_50m_admin_0_countries.shp"
+    #fp = "Countries_110/ne_110m_admin_0_countries.shp"
+    
     sf = shapefile.Reader(fp)
     data = gpd.read_file(fp)
     data_proj = data.copy()
     data_proj = data_proj.to_crs(epsg=3395)
     #data_proj = data_proj.to_crs("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +a=6371000 +b=6371000 +units=m +no_defs")
+    print(sf.fields)
 
     shapes = []
 
@@ -54,8 +60,6 @@ def shapefile_to_shape_recs():
     
     shape_recs = sf.shapeRecords()
     shape_recs = [(parts, shape_rec.record) for (parts, shape_rec) in zip(shapes, shape_recs)]
-    for shape, rec in shape_recs:
-        print(rec['SUBREGION'])
 
     #shape_recs = [(functions.shape_to_parts(shape_rec.shape), shape_rec.record) for shape_rec in shape_recs]
     return shape_recs
@@ -69,8 +73,6 @@ def project():
     data_proj.to_file(f"{fp}_3035.shp")
 
     print(data_proj['geometry'].head())
-
-
 
 #sf = shapefile.Reader("NE_110_CU/ne_110m_admin_0_map_units.shp")
 #sf = shapefile.Reader("Provinces/ne_110m_admin_1_states_provinces_lakes.shp")

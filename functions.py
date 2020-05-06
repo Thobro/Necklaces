@@ -11,6 +11,9 @@ def triangle_area(t):
     A, B, C = t[0], t[1], t[2]
     return abs(0.5 * (((B[0] - A[0]) * (C[1] - A[1])) - ((C[0] - A[0]) * (B[1] - A[1]))))
 
+def polygon_area(ts):
+    return sum([triangle_area(t) for t in ts])
+
 def point_from_triangle(t):
     """Sample a point from a triangle."""
     A, B, C = t[0], t[1], t[2]
@@ -79,13 +82,21 @@ def sample_polygon(p, n=50):
 
     return points
 
-def sample_shape(s, n=50):
+def sample_shape(s, r, n=50, tri=None, threshold=0):
     """Samples a shape that consists of multiple polygons."""
     triangulation = []
-    for polygon in s:
-        tri = triangulate_polygon(polygon)
-        for triangle in tri:
-            triangulation.append(triangle)
+    if tri:
+        for polygon in tri:
+            if polygon_area(polygon) > threshold:
+                for triangle in polygon:
+                    triangulation.append(triangle)
+    else:
+        for polygon in s:
+            tri = triangulate_polygon(polygon)
+            if polygon_area(tri) > threshold:
+                for triangle in tri:
+                    triangulation.append(triangle)
+    
     polygon_size = sum([triangle_area(t) for t in triangulation])
     triangulation = [(t, triangle_area(t) / polygon_size) for t in triangulation]
 

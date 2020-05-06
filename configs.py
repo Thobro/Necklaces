@@ -9,13 +9,15 @@ configs = {
         'requirements': [
             lambda r: r['POP_EST'] >= 1000
         ],
-        'trim_bounds': (-1*10**7, 6.3*10**6, -1*10**8, 12*10**6),
+        'trim_bounds': (-4*10**6, 6.3*10**6, 3.4*10**6, 12*10**6),
         'exclude': [
-            lambda r: r['NAME'] == 'Svalbard Is.'
+            lambda r: r['NAME'] == 'Svalbard Is.',
+            
         ],
         'show_but_exclude': [
             lambda r: r['NAME'] == 'Iceland',
         ],
+        'name_identifier': 'NAME',
     },
     'SEAsia': {
         'options': [
@@ -25,6 +27,11 @@ configs = {
             lambda r: r['POP_EST'] >= 1000
         ],
         'trim_bounds': (-1*10**8, 1*10**8, -1*10**8, 1*10**8),
+        'exclude': [
+        ],
+        'show_but_exclude': [
+        ],
+        'name_identifier': 'NAME',
     },
     'Africa': {
         'options': [
@@ -38,6 +45,11 @@ configs = {
             lambda r: r['POP_EST'] >= 0
         ],
         'trim_bounds': (-1*10**8, 1*10**8, -1*10**8, 1*10**8),
+        'exclude': [
+        ],
+        'show_but_exclude': [
+        ],
+        'name_identifier': 'NAME',
     },
     'SAmerica': {
         'options': [
@@ -47,5 +59,27 @@ configs = {
             lambda r: r['POP_EST'] >= 10000
         ],
         'trim_bounds': (-1*10**8, 1*10**8, -1*10**8, 1*10**8),
+        'exclude': [
+        ],
+        'show_but_exclude': [
+        ],
+        'name_identifier': 'NAME',
+    },
+    'USA': {
+        'options': [
+            lambda r: r['region'] == "South",
+
+        ],
+        'requirements': [
+        ],
+        'trim_bounds': (-1*10**8, 1*10**8, -1*10**8, 1*10**8),
+        'exclude': [
+            lambda r: r['name'] == 'Alaska',
+            lambda r: r['name'] == 'Hawaii'
+        ],
+        'show_but_exclude': [
+        ],
+        'name_identifier': 'name',
+        'grouping': lambda r: {'South': 'a', 'Midwest': 'b', 'Northeast': 'c', 'West': 'd',}[r['region']],
     },
 }
