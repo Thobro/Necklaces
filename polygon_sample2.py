@@ -12,11 +12,10 @@ import configs
 
 CONFIG = 'Europe'
 THRESHOLD = 0
-POINT_COUNT = 32
+POINT_COUNT = 16
 FILENAME_LOWRES = "Countries_110/ne_110m_admin_0_countries.shp"
 FILENAME_HIGHRES = "Countries_50/ne_50m_admin_0_countries.shp"
-
-
+PLOT_POINTS = True
 
 triangulation_cache = {}
 
@@ -75,7 +74,7 @@ def plot_shape_recs(shape_recs):
             x,y = poly.exterior.xy
             ax.plot(x, y, color='000', alpha=1,
                 linewidth=1, zorder=0)
-            ax.fill(x, y, color=map_colors[color_mapping[record[configs.configs[CONFIG]['name_identifier']]]], alpha=1,
+            ax.fill(x, y, color=map_colors[record['MAPCOLOR13'] - 1], alpha=1,
                 linewidth=0, zorder=0)
 
 
@@ -120,9 +119,10 @@ for region in split_dict:
     circle = plt.Circle(disc[0], disc[1], fill=False, edgecolor="k", lw=3, clip_on=False)
     circles.append(circle)
 
-'''for i in range(len(point_sets)):
-    x, y = zip(*point_sets[i])
-    ax.plot([x], [y], marker='o', markersize=3, c=random.choice(map_colors), zorder=0)'''
+if PLOT_POINTS:
+    for i in range(1):
+        x, y = zip(*point_sets[i])
+        ax.plot([x], [y], marker='o', markersize=3, c=(1, 1, 1), zorder=3)
 
 for c in circles:
     ax.add_artist(c)
