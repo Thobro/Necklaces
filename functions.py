@@ -114,54 +114,25 @@ def sample_shape(s, r, n=50, tri=None, threshold=0):
 
     return points
 
-def smallest_k_disc(point_sets):
-    all_points = [p for point_set in point_sets for p in point_set]
-    constraints = [int(len(point_set) / 2) for point_set in point_sets]
-
-    best = (None, None), math.inf
-    print("Computing all discs with 2 points...")
-    for i in tqdm(range(len(all_points))):
-        for j in range(len(all_points)):
-            if i == j:
-                continue
-            radius = math.sqrt(sq_euclid_dist(all_points[i], all_points[j])) / 2
-            
-            center = ((all_points[i][0] + all_points[j][0]) / 2, (all_points[i][1] + all_points[j][1]) / 2)
-            
-            if radius < best[1]:
-                save = True
-                for l in range(len(point_sets)):
-                    if len([p for p in point_sets[l] if in_circle(center, radius, p)]) < constraints[l]:
-                        save = False
-                        break
-                if save:
-                    best = center, radius
-
-    print("Smallest disc: ")
-    print(best)
-    print()
-
-    print("Computing all discs with 3 points...")
-    for i in tqdm(range(len(all_points))):
-        for j in range(len(all_points)):
-            if sq_euclid_dist(all_points[i], all_points[j]) >= best[1]**2:
-                continue
-            for k in range(len(all_points)):
-                if i != j and j != k:
-                    center, radius = points_to_circle(all_points[i], all_points[j], all_points[k])
-                    if radius < best[1]:
-                        save = True
-                        for l in range(len(point_sets)):
-                            if len([p for p in point_sets[l] if in_circle(center, radius, p)]) < constraints[l]:
-                                save = False
-                                break
-                        if save:
-                            best = center, radius
-
-    print("Smallest disc: ")
-    print(best)
-    print()
-    return best
+def sample_points_in_water(triangulation, n, x_min, x_max, y_min, y_max):
+    sample = []
+    while len(sample) != n:
+        x = x_min + np.random.uniform(0, 1) * (x_max - x_min)
+        y = y_min + np.random.uniform(0, 1) * (y_max - y_min)
+        p = (x, y)
+        save = True
+        for t in triangulation:
+            A, B, C = t[0], t[1], t[2]
+            area = triangle_area(t)
+            a1 = triangle_area([A, B, p])
+            a2 = triangle_area([A, C, p])
+            a3 = triangle_area([B, C, p])
+            if round(a1 + a2 + a3, 0) == round(area, 0):
+                save = False
+                break
+        if save:
+            sample.append((x, y))
+    return sample
 
 def test_rp_gt_r(r, p, constraints, all_points, mapping):
     """True if rp >= r."""
@@ -261,17 +232,33 @@ def find_rp(r, p, constraints, point_sets, mapping):
             if op == 1 and d < c: # >=
                 valid = False
                 break
-            elif op == 0 and d != c: # =
+            '''elif op == 0 and d != c: # =
                 valid = False
                 break
             elif op == -1 and d > c: # <=
                 valid = False
-                break
+                break'''
 
         if valid:
             valid_configs.append(list(open_discs))
 
-    circles = [make_circle(v) for v in valid_configs] # O(n^2)
+    circles = []
+    for v in valid_configs: # O(n^2)
+        x, y, r = make_circle(v) # O(n)
+        valid = True
+        for point_set, (c, op) in zip(point_sets, constraints): # O(n)
+            if op == 1:
+                continue
+            no_points = len([p for p in point_set if euclid_dist(p, (x, y)) < r])
+            if op == 0 and no_points != c:
+                valid = False
+                break
+            elif op == -1 and no_points > c:
+                valid = False
+                break
+        if valid:
+            circles.append((x, y, r))
+
     if len(circles) == 0:
         min_disc = (0, 0, math.inf)
     else:
@@ -280,10 +267,10 @@ def find_rp(r, p, constraints, point_sets, mapping):
     return min_disc
 
 
-def smallest_k_disc_fast(point_sets): # O(n^3)
+def smallest_k_disc_fast(point_sets, constraints): # O(n^3)
     print("Computing smallest disc using the fast algorithm...")
-    constraints = [(int(len(point_set) / 2), 1) for point_set in point_sets]
-    constraints[0] = (11, 0)
+    #constraints = [(int(len(point_set) / 2), 1) for point_set in point_sets]
+    
     c_depth = [0 for ps in point_sets]
     all_points = [p for point_set in point_sets for p in point_set]
     
@@ -309,6 +296,43 @@ def smallest_k_disc_fast(point_sets): # O(n^3)
     print()
 
     return (min_disc[0], min_disc[1]), min_disc[2]
+
+
+def smallest_k_disc_facade(point_sets):
+    constraints = [(int(len(point_set) / 2), 1) for point_set in point_sets]
+    constraints[0] = (2, -1)
+    #constraints[-1] = (0, 1) # Water threshold
+    p1, r1 = smallest_k_disc_fast(point_sets, constraints)
+    return p1, r1
+
+    constraints[-1] = (30, -1) # Water threshold
+    p2, r2 = smallest_k_disc_fast(point_sets, constraints)
+
+    water = [p for p in point_sets[-1] if euclid_dist(p, p1) < r1]
+
+    if p2 == p1:
+        return p1, r1
+    
+    discard = []
+    for i in range(len(point_sets) - 1):
+        if len([p for p in point_sets[i] if int(euclid_dist(p, p1)) == int(r1)]) > 0:
+            discard.append(i)
+    
+    print(discard)
+    pm, rm = (0, 0), math.inf
+    for index in discard:
+        candidtate_sets = point_sets[:index] + point_sets[index+1:]
+        new_constraints = [(int(len(point_set) / 2), 1) for point_set in candidtate_sets]
+        new_constraints[-1] = (0, 1)
+        pn, rn = smallest_k_disc_fast(candidtate_sets, new_constraints)
+        water = [p for p in point_sets[-1] if euclid_dist(p, pn) < rn]
+        print(len(water))
+        new_constraints[-1] = (30, -1)
+        pn, rn = smallest_k_disc_fast(candidtate_sets, new_constraints)
+        if rn < rm:
+            pm, rm = pn, rn
+
+    return pm, rm
 
 
 def smallest_k_disc_fast_randomised(point_sets): # O(n^3)
