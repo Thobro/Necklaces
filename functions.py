@@ -14,6 +14,14 @@ def triangle_area(t):
 def polygon_area(ts):
     return sum([triangle_area(t) for t in ts])
 
+def point_in_traingle(p, p0, p1, p2):
+    A = 1/2 * (-p1[1] * p2[0] + p0[1] * (-p1[0] + p2[0]) + p0[0] * (p1[1] - p2[1]) + p1[0] * p2[1])
+    sign = -1 if A < 0 else 1
+    s = (p0[1] * p2[0] - p0[0] * p2[1] + (p2[1] - p0[1]) * p[0] + (p0[0] - p2[0]) * p[1]) * sign
+    t = (p0[0] * p1[1] - p0[1] * p1[0] + (p0[1] - p1[1]) * p[0] + (p1[0] - p0[0]) * p[1]) * sign
+    
+    return s > 0 and t > 0 and (s + t) < 2 * A * sign
+
 def point_from_triangle(t):
     """Sample a point from a triangle."""
     A, B, C = t[0], t[1], t[2]
@@ -21,11 +29,7 @@ def point_from_triangle(t):
     y = np.random.uniform(0, 1)
     p = ( A[0] + x * (B[0] - A[0]) + y * (C[0] - A[0]), A[1] + x * (B[1] - A[1]) + y * (C[1] - A[1]) )
 
-    area = triangle_area(t)
-    a1 = triangle_area([A, B, p])
-    a2 = triangle_area([A, C, p])
-    a3 = triangle_area([B, C, p])
-    if round(a1 + a2 + a3, 6) == round(area, 6):
+    if point_in_traingle(p, A, B, C):
         return p
     else:    
         return ( A[0] + A[0] + (B[0] - A[0]) + (C[0] - A[0]) - p[0], A[1] + A[1] + (B[1] - A[1]) + (C[1] - A[1]) - p[1] )
@@ -123,11 +127,7 @@ def sample_points_in_water(triangulation, n, x_min, x_max, y_min, y_max):
         save = True
         for t in triangulation:
             A, B, C = t[0], t[1], t[2]
-            area = triangle_area(t)
-            a1 = triangle_area([A, B, p])
-            a2 = triangle_area([A, C, p])
-            a3 = triangle_area([B, C, p])
-            if round(a1 + a2 + a3, 0) == round(area, 0):
+            if point_in_traingle(p, A, B, C):
                 save = False
                 break
         if save:
@@ -229,7 +229,7 @@ def find_rp(r, p, constraints, point_sets, mapping):
 
         valid = True
         for d, (c, op) in zip(c_depth, constraints):
-            if op == 1 and d < c: # >=
+            if (op == 1 or op == 0) and d < c: # >=
                 valid = False
                 break
             '''elif op == 0 and d != c: # =
@@ -242,6 +242,7 @@ def find_rp(r, p, constraints, point_sets, mapping):
         if valid:
             valid_configs.append(list(open_discs))
 
+
     circles = []
     for v in valid_configs: # O(n^2)
         x, y, r = make_circle(v) # O(n)
@@ -249,7 +250,7 @@ def find_rp(r, p, constraints, point_sets, mapping):
         for point_set, (c, op) in zip(point_sets, constraints): # O(n)
             if op == 1:
                 continue
-            no_points = len([p for p in point_set if euclid_dist(p, (x, y)) < r])
+            no_points = len([p for p in point_set if euclid_dist(p, (x, y)) <= r])
             if op == 0 and no_points != c:
                 valid = False
                 break
@@ -279,7 +280,7 @@ def smallest_k_disc_fast(point_sets, constraints): # O(n^3)
         for p in point_sets[i]:
             mapping[p] = i
 
-    r = 100000000
+    r = 100000000000
     s = 0
 
     min_disc = (0, 0, math.inf)
@@ -289,6 +290,7 @@ def smallest_k_disc_fast(point_sets, constraints): # O(n^3)
             s += 1
             r = min_cand[2]
             min_disc = min_cand
+
 
     print(s)
     print("Smallest disc: ")
@@ -300,39 +302,40 @@ def smallest_k_disc_fast(point_sets, constraints): # O(n^3)
 
 def smallest_k_disc_facade(point_sets):
     constraints = [(int(len(point_set) / 2), 1) for point_set in point_sets]
-    constraints[0] = (2, -1)
-    #constraints[-1] = (0, 1) # Water threshold
-    p1, r1 = smallest_k_disc_fast(point_sets, constraints)
-    return p1, r1
+    constraints[0] = (1, 1)
+    constraints[-1] = (0, 1)
+    p, r = smallest_k_disc_fast(point_sets, constraints)
 
-    constraints[-1] = (30, -1) # Water threshold
-    p2, r2 = smallest_k_disc_fast(point_sets, constraints)
+    water_count = len([q for q in point_sets[-1] if euclid_dist(q, p) <= r])
+    print(water_count)
 
-    water = [p for p in point_sets[-1] if euclid_dist(p, p1) < r1]
+    if water_count <= 5:
+        return p, r
 
-    if p2 == p1:
-        return p1, r1
-    
-    discard = []
-    for i in range(len(point_sets) - 1):
-        if len([p for p in point_sets[i] if int(euclid_dist(p, p1)) == int(r1)]) > 0:
-            discard.append(i)
-    
-    print(discard)
-    pm, rm = (0, 0), math.inf
-    for index in discard:
-        candidtate_sets = point_sets[:index] + point_sets[index+1:]
-        new_constraints = [(int(len(point_set) / 2), 1) for point_set in candidtate_sets]
-        new_constraints[-1] = (0, 1)
-        pn, rn = smallest_k_disc_fast(candidtate_sets, new_constraints)
-        water = [p for p in point_sets[-1] if euclid_dist(p, pn) < rn]
-        print(len(water))
-        new_constraints[-1] = (30, -1)
-        pn, rn = smallest_k_disc_fast(candidtate_sets, new_constraints)
-        if rn < rm:
-            pm, rm = pn, rn
+    # While we still have too much water
+    while (water_count := len([q for q in point_sets[-1] if euclid_dist(q, p) <= r])) > 5:
+        discard_candidates = []
+        for i in range(len(point_sets) - 1):
+            if len([q for q in point_sets[i] if int(euclid_dist(q, p)) == int(r)]) > 0:
+                discard_candidates.append(i)
+        
+        min_water = math.inf
+        to_discard = None
+        for index in discard_candidates: # Find the country that reduces the number of water points most quickly
+            candidtate_sets = point_sets[:index] + point_sets[index+1:]
+            new_constraints = [(int(len(point_set) / 2), 1) for point_set in candidtate_sets]
+            new_constraints[-1] = (0, 1)
+            p1, r1 = smallest_k_disc_fast(candidtate_sets, new_constraints)
+            water_count = len([p for p in point_sets[-1] if euclid_dist(p, p1) <= r1])
+            if water_count < min_water:
+                p = p1
+                r = r1
+                to_discard = index
+            print(water_count)
+            
+        point_sets.pop(to_discard)
 
-    return pm, rm
+    return p, r
 
 
 def smallest_k_disc_fast_randomised(point_sets): # O(n^3)

@@ -15,7 +15,7 @@ configs = {
             
         ],
         'show_but_exclude': [
-            lambda r: r['NAME'] == 'Iceland',
+            #lambda r: r['NAME'] == 'Iceland',
         ],
         'name_identifier': 'NAME',
     },
