@@ -19,7 +19,7 @@ FILENAME_HIGHRES = "Countries_110/ne_110m_admin_0_countries.shp"
 PLOT_POINTS = False
 SHOW_TRIANGULATION = False
 WATER = True
-PLOT_WATER_POINTS = True
+PLOT_WATER_POINTS = False
 
 triangulation_cache = {}
 
@@ -130,9 +130,10 @@ for region in split_dict:
     if WATER:
         point_sets_local.append(water_sample)
     
-    disc = functions.smallest_k_disc_facade(point_sets_local)
-    circle = plt.Circle(disc[0], disc[1], fill=False, edgecolor="k", lw=3, clip_on=False)
-    circles.append(circle)
+    discs = functions.smallest_k_disc_facade(point_sets_local, water_constraint=100, region_constraint=int(len(point_sets_local) / 2))
+    for disc in discs:
+        circle = plt.Circle(disc[0], disc[1], fill=False, edgecolor="k", lw=3, clip_on=False)
+        circles.append(circle)
 
 if PLOT_WATER_POINTS:
     x, y = zip(*water_sample)
