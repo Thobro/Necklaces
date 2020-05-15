@@ -313,41 +313,10 @@ def smallest_k_disc_facade(point_sets, water_constraint=25, region_constraint=25
     water_count = len([q for q in point_sets[-1] if euclid_dist(q, p) <= r])
     print(water_count)
 
-
-    # Multiple discs
-    discs = [(p, r)]
-    while True:
-        print(discs)
-        discard_candidates = []
-        for i in range(len(point_sets) - 1):
-            if len([q for q in point_sets[i] if int(euclid_dist(q, p)) == int(r)]) > 0:
-                discard_candidates.append(i)
-
-        min_dif = 0
-        to_discard = None
-        for index in discard_candidates: # Find the country that reduces the number of water points most quickly
-            candidtate_sets = point_sets[:index] + point_sets[index+1:]
-            new_constraints = [(int(len(point_set) / 2), 1) for point_set in candidtate_sets]
-            #new_constraints[-1] = (0, 1)
-            p1, r1 = smallest_k_disc_fast(candidtate_sets, new_constraints)
-            #water_count = len([p for p in point_sets[-1] if euclid_dist(p, p1) <= r1])
-            #print(water_count)
-            if r - r1 > min_dif:
-                p = p1
-                r = r1
-                to_discard = index
-
-        point_sets.pop(to_discard)
-        print(len(point_sets))
-        if len(point_sets) <= region_constraint:
-            discs.append((p1, r1))
-            break
-
-    return discs
-
     if water_count <= water_constraint:
-        return p, r
+        return [(p, r)]
 
+    print("Removing water...")
     # While we still have too much water
     while True:
         discard_candidates = []
@@ -371,12 +340,47 @@ def smallest_k_disc_facade(point_sets, water_constraint=25, region_constraint=25
                 min_water = water_count
                 
         point_sets.pop(to_discard)
-        discarded.append(to_discard)
         if min_water <= water_constraint:
             break
-            
-    print(p, r)
-    return p, r
+
+    point_sets.pop(len(point_sets) - 1)
+    # Multiple discs
+    print("Starting computing multiple discs...")
+    region_constraint = len(point_sets) - region_constraint
+    discs = [(p, r)]
+    while True and region_constraint > 0:
+        discard_candidates = []
+        for i in range(len(point_sets) - 1):
+            if len([q for q in point_sets[i] if int(euclid_dist(q, p)) == int(r)]) > 0:
+                discard_candidates.append(i)
+
+        max_rad = 0
+        to_discard = None
+        for index in discard_candidates: # Find the country that reduces the number of water points most quickly
+            candidtate_sets = point_sets[:index] + point_sets[index+1:]
+            new_constraints = [(int(len(point_set) / 2), 1) for point_set in candidtate_sets]
+            #new_constraints[-1] = (0, 1)
+            p1, r1 = smallest_k_disc_fast(candidtate_sets, new_constraints)
+            #water_count = len([p for p in point_sets[-1] if euclid_dist(p, p1) <= r1])
+            #print(water_count)
+            if r1 > max_rad:
+                max_rad = r
+                p = p1
+                r = r1
+                to_discard = index
+                
+
+        point_sets.pop(to_discard)
+        print(len(point_sets))
+        if len(point_sets) <= region_constraint:
+            discs.append((p1, r1))
+            break
+    
+    print(discs)
+    return discs
+
+
+    #return p, r
 
 
 def smallest_k_disc_fast_randomised(point_sets): # O(n^3)

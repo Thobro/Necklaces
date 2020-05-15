@@ -26,7 +26,7 @@ configs = {
         'requirements': [
             lambda r: r['POP_EST'] >= 1000
         ],
-        'trim_bounds': (-1*10**8, 1*10**8, -1*10**8, 1*10**8),
+        'trim_bounds': (9.5*10**6, 1.6*10**7, -1.7*10**6, 3.5*10**6),
         'exclude': [
         ],
         'show_but_exclude': [
@@ -58,7 +58,7 @@ configs = {
         'requirements': [
             lambda r: r['POP_EST'] >= 10000
         ],
-        'trim_bounds': (-1*10**8, 1*10**8, -1*10**8, 1*10**8),
+        'trim_bounds': (-1*10**7, -3.2*10**6, -8*10**6, 2*10**6),
         'exclude': [
         ],
         'show_but_exclude': [

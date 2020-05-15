@@ -10,9 +10,9 @@ import random
 from tqdm import tqdm
 import configs
 
-CONFIG = 'Europe'
+CONFIG = 'SEAsia'
 THRESHOLD = 0
-POINT_COUNT = 6
+POINT_COUNT = 12
 FILENAME_LOWRES = "Countries_110/ne_110m_admin_0_countries.shp"
 FILENAME_HIGHRES = "Countries_110/ne_110m_admin_0_countries.shp"
 #FILENAME_HIGHRES = "Countries_50/ne_50m_admin_0_countries.shp"
@@ -122,7 +122,6 @@ circles = []
 for region in split_dict:
     point_sets_local = []
     for shape, rec in split_dict[region]:
-        print(rec['NAME'])
         sample = functions.sample_shape(shape, rec, POINT_COUNT, triangulation_cache[rec[configs.configs[CONFIG]['name_identifier']]], THRESHOLD)
         point_sets_local.append(sample)
         point_sets.append(sample)
@@ -130,7 +129,7 @@ for region in split_dict:
     if WATER:
         point_sets_local.append(water_sample)
     
-    discs = functions.smallest_k_disc_facade(point_sets_local, water_constraint=100, region_constraint=int(len(point_sets_local) / 2))
+    discs = functions.smallest_k_disc_facade(point_sets_local, water_constraint=20, region_constraint=20) # How many regions in outer circle
     for disc in discs:
         circle = plt.Circle(disc[0], disc[1], fill=False, edgecolor="k", lw=3, clip_on=False)
         circles.append(circle)
