@@ -10,16 +10,18 @@ import random
 from tqdm import tqdm
 import configs
 
-CONFIG = 'SEAsia'
+CONFIG = 'Europe'
 THRESHOLD = 0
 POINT_COUNT = 12
-FILENAME_LOWRES = "Countries_110/ne_110m_admin_0_countries.shp"
-FILENAME_HIGHRES = "Countries_110/ne_110m_admin_0_countries.shp"
+#FILENAME_LOWRES = "Countries_110/ne_110m_admin_0_countries.shp"
+#FILENAME_HIGHRES = "Countries_110/ne_110m_admin_0_countries.shp"
 #FILENAME_HIGHRES = "Countries_50/ne_50m_admin_0_countries.shp"
 PLOT_POINTS = False
 SHOW_TRIANGULATION = False
-WATER = True
+WATER = False
 PLOT_WATER_POINTS = False
+WATER_CONSTRAINT = 100
+REGION_CONSTRAINT = 100
 
 triangulation_cache = {}
 
@@ -35,6 +37,7 @@ def trim(shape, trim_bounds):
         shape[i] = [v for v in shape[i] if x_min <= v[0] <= x_max and y_min <= v[1] <= y_max]
 
     return [p for p in shape if len(p) != 0]
+    
 
 def prune(shape, record, threshold):
     '''Remove small islands etc.'''
@@ -69,8 +72,9 @@ def get_colors_from_shape_recs(shape_recs):
     
     return color_mapping
 
-def plot_shape_recs(shape_recs):
-    color_mapping = get_colors_from_shape_recs(shape_recs)
+def plot_shape_recs(shape_recs, color=True):
+    if color:
+        color_mapping = get_colors_from_shape_recs(shape_recs)
 
     for shape, record in shape_recs:
         for polygon in shape:
@@ -78,11 +82,22 @@ def plot_shape_recs(shape_recs):
             x,y = poly.exterior.xy
             ax.plot(x, y, color='000', alpha=1,
                 linewidth=1, zorder=0)
-            ax.fill(x, y, color=map_colors[record['MAPCOLOR13'] - 1], alpha=1,
-                linewidth=0, zorder=0)
+            if color:
+                ax.fill(x, y, color=map_colors[record['MAPCOLOR13'] - 1], alpha=1,
+                    linewidth=0, zorder=0)
+            else:
+                ax.fill(x, y, color=(1, 1, 1), alpha=1,
+                    linewidth=0, zorder=0)
 
 shape_recs = shape_read.shapefile_to_shape_recs(FILENAME_LOWRES)
 shape_recs = prepare_shape_recs(shape_recs)
+trimmed_recs = []
+
+all_points = []
+for shape, rec in shape_recs:
+    for polygon in shape:
+        for point in polygon:
+            all_points.append(point)
 
 
 print("Computing triangulation...")
@@ -129,7 +144,7 @@ for region in split_dict:
     if WATER:
         point_sets_local.append(water_sample)
     
-    discs = functions.smallest_k_disc_facade(point_sets_local, water_constraint=20, region_constraint=20) # How many regions in outer circle
+    discs = functions.smallest_k_disc_facade(point_sets_local, water_constraint=WATER_CONSTRAINT, region_constraint=REGION_CONSTRAINT) # How many regions in outer circle
     for disc in discs:
         circle = plt.Circle(disc[0], disc[1], fill=False, edgecolor="k", lw=3, clip_on=False)
         circles.append(circle)

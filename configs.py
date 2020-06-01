@@ -15,7 +15,7 @@ configs = {
             
         ],
         'show_but_exclude': [
-            #lambda r: r['NAME'] == 'Iceland',
+            lambda r: r['NAME'] == 'Iceland',
         ],
         'name_identifier': 'NAME',
     },
@@ -65,6 +65,22 @@ configs = {
         ],
         'name_identifier': 'NAME',
     },
+    'America': {
+        'options': [
+            lambda r: r['SUBREGION'] == "Northern America",
+            lambda r: r['SUBREGION'] == "Central America",
+        ],
+        'requirements': [
+            lambda r: r['POP_EST'] >= 10000
+        ],
+        'trim_bounds': (-2*10**7, -1*10**6, 0, 1.9*10**7),
+        'exclude': [
+            lambda r: r['NAME'] == 'Greenland',
+        ],
+        'show_but_exclude': [
+        ],
+        'name_identifier': 'NAME',
+    },
     'USA': {
         'options': [
             lambda r: r['region'] == "South",
@@ -82,4 +98,21 @@ configs = {
         'name_identifier': 'name',
         'grouping': lambda r: {'South': 'a', 'Midwest': 'b', 'Northeast': 'c', 'West': 'd',}[r['region']],
     },
+    'AfricaPhysical': {
+        'options': [
+            lambda r: r['region'] == "South",
+
+        ],
+        'requirements': [
+        ],
+        'trim_bounds': (-1*10**8, 1*10**8, -1*10**8, 1*10**8),
+        'exclude': [
+            lambda r: r['name'] == 'Alaska',
+            lambda r: r['name'] == 'Hawaii'
+        ],
+        'show_but_exclude': [
+        ],
+        'name_identifier': 'name',
+        'grouping': lambda r: {'South': 'a', 'Midwest': 'b', 'Northeast': 'c', 'West': 'd',}[r['region']],
+    }
 }
