@@ -24,7 +24,7 @@ def shapefile_to_shape_recs(fp):
     print(sf.fields)
 
     shapes = []
-    print(data_proj['geometry'][122])
+    #print(data_proj['geometry'][122])
     for entry in data_proj['geometry']:
         
         if entry.geom_type == 'MultiPolygon':
@@ -40,7 +40,7 @@ def shapefile_to_shape_recs(fp):
     
     shape_recs = sf.shapeRecords()
     shape_recs = [(parts, shape_rec.record) for (parts, shape_rec) in zip(shapes, shape_recs)]
-    shape_recs = [shape_recs[112]]
+    #shape_recs = [shape_recs[112]]
     #2.18300*10**6, 2.18500*10**6, 4.11500*10**6, 4.11400*10**6
     '''for idx, (shape, rec) in enumerate(shape_recs):
         for p in shape:

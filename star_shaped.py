@@ -111,5 +111,5 @@ plot_shape_recs(shape_read.shapefile_to_shape_recs(FILENAME_LOWRES))
 #x, y = zip(*p)
 #ax.plot([x], [y], marker='o', markersize=3, c=(1, 1, 1), zorder=3)
 
-#plt.savefig("filename.pdf", dpi=72, bbox_inches = 'tight')
+plt.savefig("filename.pdf", dpi=72, bbox_inches = 'tight')
 plt.show()
