@@ -382,6 +382,14 @@ def smallest_k_disc_facade(point_sets, water_constraint=25, region_constraint=25
 
     #return p, r
 
+def project_to_circle(point, center, radius):
+    xp, yp = point
+    xc, yc = center
+    alpha = math.atan2(yp - yc, xp - xc)
+    dx = radius * math.cos(alpha)
+    dy = radius * math.sin(alpha)
+    return (xc + dx, yc + dy)
+
 
 def smallest_k_disc_fast_randomised(point_sets): # O(n^3)
     print("Computing smallest disc using the fast algorithm...")
