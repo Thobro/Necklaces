@@ -10,12 +10,12 @@ import random
 from tqdm import tqdm
 import configs
 
-CONFIG = 'Africa'
+CONFIG = 'Europe'
 THRESHOLD = 0
 POINT_COUNT = 12
 FILENAME_LOWRES = "Countries_110/ne_110m_admin_0_countries.shp"
-FILENAME_HIGHRES = "Countries_110/ne_110m_admin_0_countries.shp"
-#FILENAME_HIGHRES = "Countries_50/ne_50m_admin_0_countries.shp"
+#FILENAME_HIGHRES = "Countries_110/ne_110m_admin_0_countries.shp"
+FILENAME_HIGHRES = "Countries_50/ne_50m_admin_0_countries.shp"
 PLOT_POINTS = False
 SHOW_TRIANGULATION = False
 WATER = False
@@ -175,5 +175,5 @@ if PLOT_POINTS:
 #for c in circles:
 #    ax.add_artist(c)
 
-#plt.savefig("filename.pdf", dpi=72, bbox_inches = 'tight')
+plt.savefig("filename.pdf", dpi=72, bbox_inches = 'tight')
 plt.show()
