@@ -270,7 +270,6 @@ def find_rp(r, p, constraints, point_sets, mapping):
 
 def smallest_k_disc_fast(point_sets, constraints): # O(n^3)
     print("Computing smallest disc using the fast algorithm...")
-    #constraints = [(int(len(point_set) / 2), 1) for point_set in point_sets]
     
     c_depth = [0 for ps in point_sets]
     all_points = [p for point_set in point_sets for p in point_set]
@@ -302,7 +301,7 @@ def smallest_k_disc_fast(point_sets, constraints): # O(n^3)
 
 def smallest_k_disc_facade(point_sets, water_constraint=25, region_constraint=25):
     constraints = [(int(len(point_set) / 2), 1) for point_set in point_sets]
-    constraints[0] = (1, 1)
+    #constraints[0] = (1, 1)
 
     if water_constraint < 100:
         constraints[-1] = (0, 1)

@@ -114,5 +114,18 @@ configs = {
         ],
         'name_identifier': 'name',
         'grouping': lambda r: {'South': 'a', 'Midwest': 'b', 'Northeast': 'c', 'West': 'd',}[r['region']],
-    }
+    },
+    'NL': {
+        'options': [
+            lambda r: r['admin'] == "Netherlands",
+        ],
+        'requirements': [
+        ],
+        'exclude': [
+        ],
+        'show_but_exclude': [
+        ],
+        'trim_bounds': (0*10**8, 1*10**6, -1*10**8, 1*10**8),
+        'name_identifier': 'name',
+    },
 }

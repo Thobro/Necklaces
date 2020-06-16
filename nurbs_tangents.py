@@ -9,6 +9,9 @@ from geomdl import utilities
 from geomdl.visualization import VisMPL
 from geomdl import multi
 import xmltodict
+import shape_read
+
+FILENAME_HIGHRES = "Admin_1_10/ne_10m_admin_1_states_provinces_lakes.shp"
 
 fig = plt.figure(1, figsize=(7,7))
 fig.patch.set_visible(False)
@@ -16,14 +19,34 @@ ax = fig.add_subplot(111)
 ax.axis('off')
 ax.set_aspect('equal')
 
+def plot_shape_recs(shape_recs, color=True):
+    if color:
+        color_mapping = get_colors_from_shape_recs(shape_recs)
+
+    for shape, record in shape_recs:
+        for polygon in shape:
+            poly = Polygon(polygon)
+            x,y = poly.exterior.xy
+            ax.plot(x, y, color='000', alpha=1,
+                linewidth=1, zorder=0)
+            if color:
+                ax.fill(x, y, color=map_colors[record['mapcolor13'] - 1], alpha=1,
+                    linewidth=0, zorder=0)
+            else:
+                ax.fill(x, y, color=(1, 1, 1), alpha=1,
+                    linewidth=0, zorder=0)
+
 geo = []
-with open("africa_clean.ipe") as file:
+shape_recs = shape_read.shapefile_to_shape_recs(FILENAME_HIGHRES)
+shape_recs = [(shape, rec) for (shape, rec) in shape_recs if rec['admin'] == 'Netherlands' and rec['scalerank'] <= 8]
+plot_shape_recs(shape_recs, color=False)
+'''with open("africa_clean.ipe") as file:
     data = file.read()
     data = xmltodict.parse(data)
     pts = data['ipe']['page']['path']['#text'].split('\n')
     for p in pts:
         x, y, c = p.split(' ')
-        geo.append((float(x), float(y)))
+        geo.append((float(x), float(y)))'''
 
 def get_points_on_tangent(p, a, dist):
     dx = math.cos(a) * dist
@@ -38,7 +61,11 @@ def get_curve_length(c):
     
     return l
 
-pts = [[274, 540], [252, 483], [209, 441], [188, 525], [154, 525], [136, 560], [158, 593], [191, 596], [233, 582]]
+#pts = [[274, 540], [252, 483], [209, 441], [188, 525], [154, 525], [136, 560], [158, 593], [191, 596], [233, 582]]
+#pts = [[373, 457], [372, 400], [217, 394], [288, 433]]
+pts = [[717*10**3, 6.45*10**6], [591*10**3, 6.451*10**6], [302*10**3, 6.56*10**6], [424*10**3, 6.94*10**6], [473*10**3, 7.07*10**6], [836*10**3, 7.10*10**6], [890*10**3, 7.03*10**6]]
+center = (582994, 6834740)
+radius = 230565
 
 def get_outer_angle_4(p_left, p_right, center, radius):
     x1, y1 = p_left
@@ -70,7 +97,7 @@ def get_cm_from_interpolation_radial(pts, interpolation_factor): # 0 is circ
         p1 = pts[(i-1) % len(pts)]
         p2 = pts[(i+1) % len(pts)]
         pr = (p2[0] - p1[0], p2[1] - p1[1])
-        alpha = math.atan2(pr[1], pr[0]) % math.pi
+        alpha = math.atan2(pr[1], pr[0])
         tangents.append(alpha)
 
     dists = []
@@ -148,11 +175,12 @@ def get_cm_from_interpolation_radial(pts, interpolation_factor): # 0 is circ
     return cm
 
 
-def get_cm_from_interpolation_length(pts, interpolation_factor): # 0 is circ
-    center_circle = (210, 530)
-    center_polygon = (223, 555)
-    center = center_circle[0] * (1 - interpolation_factor) + center_polygon[0] * interpolation_factor, center_circle[1] * (1 - interpolation_factor) + center_polygon[1] * interpolation_factor
-    radius = 70
+def get_cm_from_interpolation_length(pts, interpolation_factor, center_circle, radius): # 0 is circ
+    #center_circle = (210, 530)
+    #center_circle = (306, 414)
+
+    center = center_circle
+    #radius = 60
     cm = multi.CurveContainer()
     cm.vis = VisMPL.VisCurve2D(axes=False, labels=False, ctrlpts=False, legend=False)
     circle_length = 2 * math.pi * radius
@@ -177,8 +205,6 @@ def get_cm_from_interpolation_length(pts, interpolation_factor): # 0 is circ
         d = dists[i]
 
         p1, p2 = get_points_on_tangent(pts[i], tangents[i], d)
-        if math.atan2(p1[1] - center_polygon[1], p1[0] - center_polygon[0]) < math.atan2(p2[1] - center_polygon[1], p2[0] - center_polygon[0]):
-            p1, p2 = p2, p1
         if functions.euclid_dist(p1, pts[(i+1) % len(pts)]) < functions.euclid_dist(p2, pts[(i+1) % len(pts)]):
             p2, p1 = p1, p2
 
@@ -209,7 +235,6 @@ def get_cm_from_interpolation_length(pts, interpolation_factor): # 0 is circ
     
     xp = xc + radius * math.cos(alpha)
     yp = yc + radius * math.sin(alpha)
-    #pts_interpolated.append((xp, yp))
 
     angle_sum = starting_angle
     for i in range(len(pts) - 1):
@@ -265,6 +290,8 @@ def get_cm_from_interpolation_length(pts, interpolation_factor): # 0 is circ
 
     dists = [interpolation_factor * dp + (1 - interpolation_factor) * dc for (dp, dc) in zip(dists, dists_interpolated)]
 
+    angle_mapping = {}
+
     ctrlpts = []
     for i in range(len(pts)):
         c = BSpline.Curve()
@@ -272,15 +299,37 @@ def get_cm_from_interpolation_length(pts, interpolation_factor): # 0 is circ
         d = dists[i]
 
         p1, p2 = get_points_on_tangent(pts[i], tangents[i], d)
-        if math.atan2(p1[1] - center[1], p1[0] - center[0]) < math.atan2(p2[1] - center[1], p2[0] - center[0]):
-            p1, p2 = p2, p1
-        if functions.euclid_dist(p1, pts[(i+1) % len(pts)]) < functions.euclid_dist(p2, pts[(i+1) % len(pts)]):
-            p2, p1 = p1, p2
+
+        if i == 0:
+            print(tangents[i])
+            if p1[1] < p2[1] and tangents[i] < math.pi:
+                p1, p2 = p2, p1
+            elif p1[1] > p2[1] and tangents[i] > math.pi:
+                p1, p2 = p2, p1
+        
+        else:
+
+            if math.atan2(p1[1] - center[1], p1[0] - center[0]) < math.atan2(p2[1] - center[1], p2[0] - center[0]):
+                p1, p2 = p2, p1
+            if functions.euclid_dist(p1, pts[(i+1) % len(pts)]) < functions.euclid_dist(p2, pts[(i+1) % len(pts)]):
+                p2, p1 = p1, p2
+
+        xp, yp = pts[i]
+        if (xp, yp) in angle_mapping:
+            p = angle_mapping[(xp, yp)]
+
+            if p[0] > xp and p2[0] > xp or p[0] < xp and p2[0] < xp:
+                p1, p2 = p2, p1
+
+        angle_mapping[(xp, yp)] = p2
 
         p3, p4 = get_points_on_tangent(pts[(i+1) % len(pts)], tangents[(i+1) % len(pts)], d)
 
         if functions.euclid_dist(p4, pts[i]) < functions.euclid_dist(p3, pts[i]):
             p4, p3 = p3, p4
+
+        xp, yp = pts[(i+1) % len(pts)]
+        angle_mapping[(xp, yp)] = p3
 
         c.ctrlpts = [pts[i], p2, p3, pts[(i+1) % len(pts)]]
         c.knotvector = [0, 0, 0, 0, 1, 1, 1, 1]
@@ -288,21 +337,21 @@ def get_cm_from_interpolation_length(pts, interpolation_factor): # 0 is circ
 
     return cm
 
-for i, f in enumerate([1]):
+for i, f in enumerate([0.5]):
     colors = ['red', 'green', 'blue', 'purple', 'black']
-    cm = get_cm_from_interpolation_length(pts, f)
+    cm = get_cm_from_interpolation_length(pts, f, center, radius)
 
     for j, c in enumerate(cm):
         curvepts = np.array(c.evalpts)
         ctrlpts = np.array(c.ctrlpts)
         get_curve_length(c)
-        cppolygon, = plt.plot(ctrlpts[:, 0], ctrlpts[:, 1], color='black', linestyle='-.', marker='o', markersize='3')
+        #cppolygon, = plt.plot(ctrlpts[:, 0], ctrlpts[:, 1], color='black', linestyle='-.', marker='o', markersize='3')
         curveplt, = plt.plot(curvepts[:, 0], curvepts[:, 1], color=colors[j % 5], linestyle='-')  # evaluated curve points
 
-poly = Polygon(geo)
-x, y = poly.exterior.xy
-ax.plot(x, y, color='000', alpha=1,
-        linewidth=1, zorder=0)
+#poly = Polygon(geo)
+#x, y = poly.exterior.xy
+#ax.plot(x, y, color='000', alpha=1,
+#        linewidth=1, zorder=0)
 plt.show()
 
 #cm.render()
