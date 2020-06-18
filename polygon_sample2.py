@@ -11,14 +11,14 @@ from tqdm import tqdm
 import configs
 from polygon_sample_functions import *
 
-CONFIG = 'NL'
+CONFIG = 'Europe'
 THRESHOLD = 0
 POINT_COUNT = 16
-#FILENAME_LOWRES = "Countries_110/ne_110m_admin_0_countries.shp"
-#FILENAME_HIGHRES = "Countries_110/ne_110m_admin_0_countries.shp"
+FILENAME_LOWRES = "Countries_110/ne_110m_admin_0_countries.shp"
+FILENAME_HIGHRES = "Countries_110/ne_110m_admin_0_countries.shp"
 #FILENAME_HIGHRES = "Countries_50/ne_50m_admin_0_countries.shp"
-FILENAME_HIGHRES = "Admin_1_10/ne_10m_admin_1_states_provinces_lakes.shp"
-FILENAME_LOWRES = FILENAME_HIGHRES
+#FILENAME_HIGHRES = "Admin_1_10/ne_10m_admin_1_states_provinces_lakes.shp"
+#FILENAME_LOWRES = FILENAME_HIGHRES
 PLOT_POINTS = False
 SHOW_TRIANGULATION = False
 WATER = False
@@ -76,7 +76,7 @@ def plot_shape_recs(shape_recs, color=True):
             ax.plot(x, y, color='000', alpha=1,
                 linewidth=1, zorder=0)
             if color:
-                ax.fill(x, y, color=map_colors[record['mapcolor13'] - 1], alpha=1,
+                ax.fill(x, y, color=map_colors[record['MAPCOLOR13'] - 1], alpha=1,
                     linewidth=0, zorder=0)
             else:
                 ax.fill(x, y, color=(1, 1, 1), alpha=1,

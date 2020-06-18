@@ -48,7 +48,7 @@ def shapefile_to_shape_recs(fp):
 
     
     # Offset and save
-    polygons = []
+    '''polygons = []
     for shape, rec in shape_recs:
         if rec['admin'] == 'Netherlands':
             for part in shape:
@@ -58,21 +58,6 @@ def shapefile_to_shape_recs(fp):
                 for polygon in solution:
                     p = Polygon(polygon)
                     polygons.append(p)
-
-    boundary = gpd.GeoSeries(unary_union(polygons))
-    with open("polygon2.wkt", "w") as text_file:
-        text_file.write(str(boundary[0]))
-    
-    '''with open("polygon.wkt", "w") as text_file:
-        text_file.write(str(boundary[0]))
-    
-
-    polygons = []
-    for shape, rec in shape_recs_raw:
-        if rec['admin'] == 'Netherlands':
-            polygons.append(shape)
-
-    print(polygons)
 
     boundary = gpd.GeoSeries(unary_union(polygons))
     with open("polygon.wkt", "w") as text_file:
