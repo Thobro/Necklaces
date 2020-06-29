@@ -30,6 +30,24 @@ configs = {
         'exclude': [
         ],
         'show_but_exclude': [
+            lambda r: r['NAME'] == 'Timor-Leste',
+        ],
+        'name_identifier': 'NAME',
+    },
+    'EAsia': {
+        'options': [
+            lambda r: r['SUBREGION'] == "Eastern Asia",
+            lambda r: r['SUBREGION'] == "Central Asia",
+            lambda r: r['SUBREGION'] == "Southern Asia",
+        ],
+        'requirements': [
+            lambda r: r['POP_EST'] >= 1000
+        ],
+        'trim_bounds': (-1*10**7, 1*10**8, -1*10**6, 3.5*10**7),
+        'exclude': [
+        ],
+        'show_but_exclude': [
+            #lambda r: r['NAME'] == 'Timor-Leste',
         ],
         'name_identifier': 'NAME',
     },
@@ -62,6 +80,7 @@ configs = {
         'exclude': [
         ],
         'show_but_exclude': [
+            #lambda r: r['NAME'] == 'Iceland',
         ],
         'name_identifier': 'NAME',
     },
@@ -73,7 +92,7 @@ configs = {
         'requirements': [
             lambda r: r['POP_EST'] >= 10000
         ],
-        'trim_bounds': (-2*10**7, -1*10**6, 0, 1.9*10**7),
+        'trim_bounds': (-2*10**9, 1*10**9, -2*10**9, 1.9*10**9),
         'exclude': [
             lambda r: r['NAME'] == 'Greenland',
         ],

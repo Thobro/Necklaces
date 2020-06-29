@@ -11,9 +11,9 @@ from tqdm import tqdm
 import configs
 from polygon_sample_functions import *
 
-CONFIG = 'Europe'
+CONFIG = 'EAsia'
 THRESHOLD = 0
-POINT_COUNT = 16
+POINT_COUNT = 20
 FILENAME_LOWRES = "Countries_110/ne_110m_admin_0_countries.shp"
 FILENAME_HIGHRES = "Countries_110/ne_110m_admin_0_countries.shp"
 #FILENAME_HIGHRES = "Countries_50/ne_50m_admin_0_countries.shp"
@@ -131,15 +131,46 @@ point_sets = []
 circles = []
 for region in split_dict:
     point_sets_local = []
+    constraints = []
+
+    areas = []
+    
+    for shape, rec in split_dict[region]:
+        triangulation = triangulation_cache[rec[configs.configs[CONFIG]['name_identifier']]]
+        total_area = sum([functions.polygon_area(triangulation[i]) for i in range(len(shape))])
+        areas.append(total_area)
+
+
     for shape, rec in split_dict[region]:
         sample = functions.sample_shape(shape, rec, POINT_COUNT, triangulation_cache[rec[configs.configs[CONFIG]['name_identifier']]], THRESHOLD)
+        triangulation = triangulation_cache[rec[configs.configs[CONFIG]['name_identifier']]]
+        total_area = sum([functions.polygon_area(triangulation[i]) for i in range(len(shape))])
         point_sets_local.append(sample)
         point_sets.append(sample)
+
+        max_area = max(areas) - min(areas)
+        total_area -= min(areas)
+
+        f = (1 - total_area / max_area) * (1 / 2 - 1 / 8) + 1 / 8
+        #f = 0.5
+        c = len(sample) * f
+        print(c, rec[configs.configs[CONFIG]['name_identifier']])
+        constraints.append((c, 1))
+
+        '''if rec[configs.configs[CONFIG]['name_identifier']] in ['Chile']:
+            constraints.append((0, 1))
+        else:
+            constraints.append((len(sample) / 2, 1))'''
+
+    print(constraints)
+
+
     
     if WATER:
         point_sets_local.append(water_sample)
     
-    discs = functions.smallest_k_disc_facade(point_sets_local, water_constraint=WATER_CONSTRAINT, region_constraint=REGION_CONSTRAINT) # How many regions in outer circle
+
+    discs = functions.smallest_k_disc_facade(point_sets_local, constraints, water_constraint=WATER_CONSTRAINT, region_constraint=REGION_CONSTRAINT) # How many regions in outer circle
     for disc in discs:
         circle = plt.Circle(disc[0], disc[1], fill=False, edgecolor="k", lw=3, clip_on=False)
         circles.append(circle)

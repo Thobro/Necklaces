@@ -19,6 +19,63 @@ def shapefile_to_shape_recs(fp):
     data = gpd.read_file(fp)
     data_proj = data.copy()
     data_proj = data_proj.to_crs(epsg=3395)
+    #data_proj = data_proj.to_crs("+proj=robin +lon_0=-100 +x_0=0 +y_0=0 +a=6371000 +b=6371000 +units=m +no_defs")
+    #data_proj = data_proj.to_crs("+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs")
+    #data_proj = data_proj.to_crs("+proj=lcc +lat_1=33 +lat_2=45 +lat_0=39 +lon_0=-96 +x_0=0 +y_0=0 +datum=NAD83 +units=m +no_defs")
+    print(sf.fields)
+
+    shapes = []
+    raw_shapes = []
+    
+    
+    #print(data_proj['geometry'][122])
+    for entry in data_proj['geometry']:
+        if entry.geom_type == 'MultiPolygon':
+            parts = []
+            raw_shapes.append(entry)
+            for polygon in entry:
+                parts.append(list(polygon.exterior.coords))
+            shapes.append(parts)
+        elif entry.geom_type == 'Polygon':
+            parts = []
+            raw_shapes.append(entry)
+            parts.append(list(entry.exterior.coords))
+            shapes.append(parts)
+
+    
+    shape_recs_sf = sf.shapeRecords()
+    shape_recs = [(parts, shape_rec.record) for (parts, shape_rec) in zip(shapes, shape_recs_sf)]
+    for shape, rec in shape_recs:
+        print(rec['SUBREGION'])
+
+    #shape_recs_raw = [(parts, shape_rec.record) for (parts, shape_rec) in zip(raw_shapes, shape_recs_sf)]
+    
+
+    
+    # Offset and save
+    '''polygons = []
+    for shape, rec in shape_recs:
+        if rec['admin'] == 'Netherlands':
+            for part in shape:
+                pco = pyclipper.PyclipperOffset()
+                pco.AddPath(part, pyclipper.JT_SQUARE, pyclipper.ET_CLOSEDPOLYGON)
+                solution = pco.Execute(100000.0)
+                for polygon in solution:
+                    p = Polygon(polygon)
+                    polygons.append(p)
+
+    boundary = gpd.GeoSeries(unary_union(polygons))
+    with open("polygon.wkt", "w") as text_file:
+        text_file.write(str(boundary[0]))'''
+    
+
+    return shape_recs
+
+def shape_to_wkt(fp="Countries_110/ne_110m_admin_0_countries.shp"):
+    sf = shapefile.Reader(fp)
+    data = gpd.read_file(fp)
+    data_proj = data.copy()
+    data_proj = data_proj.to_crs(epsg=3395)
     #data_proj = data_proj.to_crs("+proj=robin +lon_0=0 +x_0=0 +y_0=0 +a=6371000 +b=6371000 +units=m +no_defs")
     print(sf.fields)
 
@@ -43,26 +100,24 @@ def shapefile_to_shape_recs(fp):
     
     shape_recs_sf = sf.shapeRecords()
     shape_recs = [(parts, shape_rec.record) for (parts, shape_rec) in zip(shapes, shape_recs_sf)]
-    #shape_recs_raw = [(parts, shape_rec.record) for (parts, shape_rec) in zip(raw_shapes, shape_recs_sf)]
-    
-
     
     # Offset and save
-    '''polygons = []
+    polygons = []
     for shape, rec in shape_recs:
-        if rec['admin'] == 'Netherlands':
+        if rec['SUBREGION'] == 'South America':
             for part in shape:
                 pco = pyclipper.PyclipperOffset()
                 pco.AddPath(part, pyclipper.JT_SQUARE, pyclipper.ET_CLOSEDPOLYGON)
-                solution = pco.Execute(100000.0)
+                solution = pco.Execute(0)
                 for polygon in solution:
                     p = Polygon(polygon)
                     polygons.append(p)
 
     boundary = gpd.GeoSeries(unary_union(polygons))
-    with open("polygon.wkt", "w") as text_file:
-        text_file.write(str(boundary[0]))'''
+    with open("polygon3.wkt", "w") as text_file:
+        text_file.write(str(boundary[0]))
     
 
     return shape_recs
 
+shape_to_wkt()

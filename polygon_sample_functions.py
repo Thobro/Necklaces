@@ -1,5 +1,5 @@
 import configs
-CONFIG = 'Europe'
+CONFIG = 'EAsia'
 
 def trim(shape, trim_bounds):
     x_min, x_max, y_min, y_max = trim_bounds
